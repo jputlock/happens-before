@@ -1,53 +1,84 @@
 import {ExecutionThread} from './executionthread';
+import {EventNode} from './eventnode';
+import {RelationLink} from './relationlink';
+import {Point} from './point';
 
 class DrawingApp {
   private static readonly CLICK_RADIUS = 30;
 
   private canvas: HTMLCanvasElement;
   private context: CanvasRenderingContext2D;
-  private threads: ExecutionThread[];
+
+  private selected: EventNode | null = null;
+
+  private threads: Map<number, ExecutionThread>;
+  private links: RelationLink[];
 
   constructor() {
     this.canvas = document.getElementById('canvas') as HTMLCanvasElement;
     this.context = this.canvas.getContext('2d')!;
-    this.threads = [];
-    this.threads.push(new ExecutionThread(0), new ExecutionThread(1));
 
-    this.canvas.width = this.getCanvasWidth();
-    this.canvas.height = this.getCanvasHeight();
+    this.threads = new Map();
+    for (const num of [0, 1]) {
+      this.threads.set(num, new ExecutionThread(num));
+    }
 
-    this.context.lineWidth = 3;
-    this.context.strokeStyle = 'black';
+    this.links = [];
 
     // Hook up the event listeners
     this.createUserEvents();
 
     // Draw the thread
-    this.drawThreads();
+    this.redraw();
   }
 
-  public getCanvasWidth(): number {
-    return this.canvas.clientWidth;
+  getCanvasWidth(): number {
+    return this.canvas.width;
   }
 
-  public getCanvasHeight(): number {
-    return this.canvas.clientHeight;
+  getCanvasHeight(): number {
+    return this.canvas.height;
   }
 
   private createUserEvents() {
-    const canvas = this.canvas;
+    window.addEventListener('resize', this.resizeHandler);
 
+    const canvas = this.canvas;
     canvas.addEventListener('dblclick', this.doubleClickHandler);
+    canvas.addEventListener('mousedown', this.pressHandler);
 
     document
       .getElementById('clear')!
-      .addEventListener('click', this.clearEventHandler);
+      .addEventListener('click', this.clearClickedHandler);
   }
 
-  private drawThreads() {
-    console.log('Drawing threads.');
-    for (const thread of this.threads) {
+  private redraw() {
+    this.clearCanvas();
+    this.canvas.width = window.innerWidth;
+    this.canvas.height = window.innerHeight;
+
+    // Draw the threads
+    for (const thread of this.threads.values()) {
       thread.draw(this.getCanvasWidth(), this.getCanvasHeight(), this.context);
+    }
+
+    // Draw the links
+    for (const link of this.links) {
+      const start = new Point(
+        link.startEvent.x,
+        this.threads.get(link.startEvent.parentIdentifier)!.y
+      );
+      const end = new Point(
+        link.endEvent.x,
+        this.threads.get(link.endEvent.parentIdentifier)!.y
+      );
+      const startProjection = link.startEvent.getProjection(
+        start.x,
+        start.y,
+        end
+      );
+      const endProjection = link.endEvent.getProjection(end.x, end.y, start);
+      link.draw(startProjection, endProjection, this.context);
     }
   }
 
@@ -56,21 +87,25 @@ class DrawingApp {
     console.log('Cleared the canvas.');
   }
 
-  private clearEventHandler = () => {
+  // EVENT HANDLERS
+  private clearClickedHandler = () => {
     this.clearCanvas();
   };
 
+  private resizeHandler = () => {
+    this.redraw();
+  };
+
   private doubleClickHandler = (event: MouseEvent) => {
+    const mouseX = event.pageX;
+    const mouseY = event.pageY;
+
     // Determine if we've clicked on anything
-
-    // ASSERT: we haven't clicked on anything
-    // Determine which thread to add to
-
     let minDistance: number | null = null;
     let thread: ExecutionThread | null = null;
-    for (const currentThread of this.threads) {
+    for (const currentThread of this.threads.values()) {
       // The list of threads should be relatively short so iterating over it isn't expensive
-      const distance = Math.abs(currentThread.y - event.y);
+      const distance = Math.abs(currentThread.y - mouseY);
       if (distance > DrawingApp.CLICK_RADIUS) {
         continue;
       }
@@ -82,12 +117,53 @@ class DrawingApp {
     if (thread === null) {
       return;
     }
-    // Make sure that the node is correctly spaced between the other nodes
 
-    // Add the node
-    thread.addEvent(event.x);
-    this.clearCanvas();
-    this.drawThreads();
+    // TODO: check if clicked on pre-existing node
+
+    if (!thread.tryAddEvent(mouseX)) {
+      this.redraw();
+    }
+  };
+
+  private pressHandler = (event: MouseEvent) => {
+    const mouseX = event.pageX;
+    const mouseY = event.pageY;
+    const clickPoint = new Point(mouseX, mouseY);
+    console.log(clickPoint);
+
+    let newSelection: EventNode | null = null;
+    for (const thread of this.threads.values()) {
+      newSelection = thread.getNodeAt(clickPoint);
+      if (newSelection !== null) {
+        break;
+      }
+    }
+
+    if (newSelection === null) {
+      if (this.selected !== null) {
+        this.selected.isSelected = false;
+        this.selected = null;
+      }
+      this.redraw();
+      return;
+    }
+
+    if (this.selected === null) {
+      newSelection.isSelected = true;
+      this.selected = newSelection;
+    } else if (this.selected !== newSelection) {
+      this.selected.isSelected = false;
+      if (this.selected.parentIdentifier !== newSelection.parentIdentifier) {
+        // TODO: prevent duplicate links
+        this.links.push(new RelationLink(this.selected, newSelection));
+        newSelection.isSelected = false;
+        this.selected = null;
+      } else {
+        newSelection.isSelected = true;
+        this.selected = newSelection;
+      }
+    }
+    this.redraw();
   };
 }
 
