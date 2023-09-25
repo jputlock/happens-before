@@ -18,12 +18,10 @@ class DrawingApp {
     this.canvas = document.getElementById('canvas') as HTMLCanvasElement;
     this.context = this.canvas.getContext('2d')!;
 
+    // Set to default state
     this.threads = new Map();
-    for (const num of [0, 1]) {
-      this.threads.set(num, new ExecutionThread(num));
-    }
-
     this.links = [];
+    this.reset();
 
     // Hook up the event listeners
     this.createUserEvents();
@@ -48,8 +46,11 @@ class DrawingApp {
     canvas.addEventListener('mousedown', this.pressHandler);
 
     document
-      .getElementById('clear')!
-      .addEventListener('click', this.clearClickedHandler);
+      .getElementById('add_thread')!
+      .addEventListener('click', this.addThreadHandler);
+    document
+      .getElementById('reset')!
+      .addEventListener('click', this.resetHandler);
   }
 
   private redraw() {
@@ -82,14 +83,30 @@ class DrawingApp {
     }
   }
 
+  private reset() {
+    this.threads = new Map();
+    for (const num of [0, 1]) {
+      this.threads.set(num, new ExecutionThread(num));
+    }
+
+    this.links = [];
+  }
+
   private clearCanvas() {
     this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     console.log('Cleared the canvas.');
   }
 
   // EVENT HANDLERS
-  private clearClickedHandler = () => {
-    this.clearCanvas();
+  private addThreadHandler = () => {
+    const nextId = this.threads.size;
+    this.threads.set(nextId, new ExecutionThread(nextId));
+    this.redraw();
+  };
+
+  private resetHandler = () => {
+    this.reset();
+    this.redraw();
   };
 
   private resizeHandler = () => {

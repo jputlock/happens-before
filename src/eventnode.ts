@@ -4,7 +4,7 @@ export class EventNode {
   // CLASS CONSTANTS
   static readonly RADIUS: number = 30;
 
-  private static NAME_COUNTER = 1;
+  private static NODE_COUNTER = 1;
 
   // MEMBER DATA
   readonly parentIdentifier: number;
@@ -15,7 +15,7 @@ export class EventNode {
   constructor(x: number, id: number) {
     this.parentIdentifier = id;
     this.x = x;
-    this.name = `${EventNode.NAME_COUNTER++}`;
+    this.name = `${EventNode.NODE_COUNTER++}`;
   }
 
   // Draw this node

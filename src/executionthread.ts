@@ -45,6 +45,10 @@ export class ExecutionThread {
     context.strokeStyle = oldStyle.strokeStyle;
   }
 
+  clear() {
+    this.nodes.length = 0;
+  }
+
   tryAddEvent(x: number): number {
     if (
       this.nodes.some(node => Math.abs(x - node.x) < EventNode.RADIUS * 1.2)
