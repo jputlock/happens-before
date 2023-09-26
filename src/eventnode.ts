@@ -6,7 +6,7 @@ export class EventNode {
 
   private static NODE_COUNTER = 1;
   public static resetCounter() {
-    this.NODE_COUNTER = 0;
+    this.NODE_COUNTER = 1;
   }
 
   // MEMBER DATA
