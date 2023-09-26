@@ -10,6 +10,7 @@ class DrawingApp {
   private context: CanvasRenderingContext2D;
 
   private selected: EventNode | null = null;
+  private dragging = false;
 
   private threads: Map<number, ExecutionThread>;
   private links: RelationLink[];
@@ -43,7 +44,9 @@ class DrawingApp {
 
     const canvas = this.canvas;
     canvas.addEventListener('dblclick', this.doubleClickHandler);
-    canvas.addEventListener('mousedown', this.pressHandler);
+    canvas.addEventListener('mousedown', this.mouseDownHandler);
+    canvas.addEventListener('mousemove', this.mouseMoveHandler);
+    canvas.addEventListener('mouseup', this.mouseUpHandler);
 
     document
       .getElementById('add_thread')!
@@ -97,6 +100,23 @@ class DrawingApp {
     console.log('Cleared the canvas.');
   }
 
+  private getNearestThread(y: number): ExecutionThread | null {
+    let minDistance: number | null = null;
+    let thread: ExecutionThread | null = null;
+    for (const currentThread of this.threads.values()) {
+      // The list of threads should be relatively short so iterating over it isn't expensive
+      const distance = Math.abs(currentThread.y - y);
+      if (distance > DrawingApp.CLICK_RADIUS) {
+        continue;
+      }
+      if (minDistance === null || distance < minDistance) {
+        minDistance = distance;
+        thread = currentThread;
+      }
+    }
+    return thread;
+  }
+
   // EVENT HANDLERS
   private addThreadHandler = () => {
     const nextId = this.threads.size;
@@ -116,33 +136,19 @@ class DrawingApp {
   private doubleClickHandler = (event: MouseEvent) => {
     const mouseX = event.pageX;
     const mouseY = event.pageY;
-
-    // Determine if we've clicked on anything
-    let minDistance: number | null = null;
-    let thread: ExecutionThread | null = null;
-    for (const currentThread of this.threads.values()) {
-      // The list of threads should be relatively short so iterating over it isn't expensive
-      const distance = Math.abs(currentThread.y - mouseY);
-      if (distance > DrawingApp.CLICK_RADIUS) {
-        continue;
-      }
-      if (minDistance === null || distance < minDistance) {
-        minDistance = distance;
-        thread = currentThread;
-      }
-    }
+    const thread = this.getNearestThread(mouseY);
     if (thread === null) {
       return;
     }
 
     // TODO: check if clicked on pre-existing node
 
-    if (!thread.tryAddEvent(mouseX)) {
+    if (thread.tryAddNode(mouseX) !== false) {
       this.redraw();
     }
   };
 
-  private pressHandler = (event: MouseEvent) => {
+  private mouseDownHandler = (event: MouseEvent) => {
     const mouseX = event.pageX;
     const mouseY = event.pageY;
     const clickPoint = new Point(mouseX, mouseY);
@@ -180,7 +186,40 @@ class DrawingApp {
         this.selected = newSelection;
       }
     }
+    this.dragging = true;
     this.redraw();
+  };
+
+  private mouseMoveHandler = (event: MouseEvent) => {
+    if (!this.dragging || !this.selected) {
+      return;
+    }
+    console.log('moving');
+
+    // Move the node horizontally with the mouse
+    const mouseX = event.pageX;
+    this.selected.x = mouseX;
+
+    // Snap the node to the thread the mouse is nearest to
+    const mouseY = event.pageY;
+    const thread = this.getNearestThread(mouseY);
+    if (
+      thread !== null &&
+      thread.identifier !== this.selected.parentIdentifier
+    ) {
+      // Need to move threads
+      const oldThread = this.threads.get(this.selected.parentIdentifier)!;
+      oldThread.removeNode(this.selected);
+      thread.insertNode(this.selected);
+      this.selected.parentIdentifier = thread.identifier;
+    }
+
+    this.redraw();
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  private mouseUpHandler = (event: MouseEvent) => {
+    this.dragging = false;
   };
 }
 

@@ -49,21 +49,38 @@ export class ExecutionThread {
     this.nodes.length = 0;
   }
 
-  tryAddEvent(x: number): number {
+  tryAddNode(x: number, name: string | null = null): EventNode | false {
     if (
       this.nodes.some(node => Math.abs(x - node.x) < EventNode.RADIUS * 1.2)
     ) {
-      return 1;
+      return false;
     }
-    this.addEvent(x);
-    return 0;
+    return this.addNode(x, name);
   }
 
-  private addEvent(x: number) {
-    this.nodes.push(new EventNode(x, this.identifier));
+  insertNode(node: EventNode) {
+    this.nodes.push(node);
 
     // TODO: update this to be an efficient method
     this.nodes.sort((a, b) => a.x - b.x);
+  }
+
+  removeNode(target: EventNode) {
+    const index = this.nodes.findIndex(node => node === target);
+    if (index === -1) {
+      console.log("Trying to remove node that doesn't exist in thread");
+      return;
+    }
+    this.nodes.splice(index, 1);
+  }
+
+  private addNode(x: number, name: string | null = null): EventNode {
+    const node = new EventNode(x, this.identifier, name);
+    this.nodes.push(node);
+
+    // TODO: update this to be an efficient method
+    this.nodes.sort((a, b) => a.x - b.x);
+    return node;
   }
 
   containsPoint(p: Point): boolean {

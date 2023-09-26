@@ -7,15 +7,15 @@ export class EventNode {
   private static NODE_COUNTER = 1;
 
   // MEMBER DATA
-  readonly parentIdentifier: number;
+  parentIdentifier: number;
   x: number;
   name: string | null = null;
   isSelected = false;
 
-  constructor(x: number, id: number) {
+  constructor(x: number, id: number, name: string | null = null) {
     this.parentIdentifier = id;
     this.x = x;
-    this.name = `${EventNode.NODE_COUNTER++}`;
+    this.name = name !== null ? name : `${EventNode.NODE_COUNTER++}`;
   }
 
   // Draw this node

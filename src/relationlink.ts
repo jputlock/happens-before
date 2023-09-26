@@ -9,27 +9,18 @@ export class RelationLink {
     this.startEvent = startEvent;
     this.endEvent = endEvent;
 
-    console.log(
-      `Created new link from ${startEvent.name} -> ${startEvent.name}`
-    );
+    console.log(`Created new link from ${startEvent.name} -> ${endEvent.name}`);
   }
 
   draw(start: Point, end: Point, context: CanvasRenderingContext2D) {
-    if (
-      Math.abs(
-        this.startEvent.parentIdentifier - this.endEvent.parentIdentifier
-      ) > 1
-    ) {
-      console.log(
-        'Unimplemented - this link crosses through another thread of execution'
-      );
-      return;
-    }
-
     this.drawArrow(start, end, context);
   }
 
-  drawArrow(start: Point, end: Point, context: CanvasRenderingContext2D) {
+  private drawArrow(
+    start: Point,
+    end: Point,
+    context: CanvasRenderingContext2D
+  ) {
     context.lineWidth = 3;
     context.strokeStyle = 'black';
     context.fillStyle = 'black';
