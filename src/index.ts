@@ -99,7 +99,6 @@ class DrawingApp {
 
   private clearCanvas() {
     this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    console.log('Cleared the canvas.');
   }
 
   private getNearestThread(y: number): ExecutionThread | null {
@@ -143,8 +142,6 @@ class DrawingApp {
       return;
     }
 
-    // TODO: check if clicked on pre-existing node
-
     if (thread.tryAddNode(mouseX) !== false) {
       this.redraw();
     }
@@ -154,7 +151,6 @@ class DrawingApp {
     const mouseX = event.pageX;
     const mouseY = event.pageY;
     const clickPoint = new Point(mouseX, mouseY);
-    console.log(clickPoint);
 
     let newSelection: EventNode | null = null;
     for (const thread of this.threads.values()) {
@@ -196,7 +192,6 @@ class DrawingApp {
     if (!this.dragging || !this.selected) {
       return;
     }
-    console.log('moving');
 
     // Move the node horizontally with the mouse
     const mouseX = event.pageX;
@@ -226,7 +221,6 @@ class DrawingApp {
 
   private keyDownHandler = (event: KeyboardEvent) => {
     const keyCode = event.code;
-    console.log(keyCode);
 
     if (keyCode === 'Escape') {
       if (this.selected !== null) {
