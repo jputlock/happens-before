@@ -47,6 +47,7 @@ class DrawingApp {
     canvas.addEventListener('mousedown', this.mouseDownHandler);
     canvas.addEventListener('mousemove', this.mouseMoveHandler);
     canvas.addEventListener('mouseup', this.mouseUpHandler);
+    window.addEventListener('keydown', this.keyDownHandler);
 
     document
       .getElementById('add_thread')!
@@ -220,6 +221,19 @@ class DrawingApp {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private mouseUpHandler = (event: MouseEvent) => {
     this.dragging = false;
+  };
+
+  private keyDownHandler = (event: KeyboardEvent) => {
+    const keyCode = event.code;
+    console.log(keyCode);
+
+    if (keyCode === 'Escape') {
+      if (this.selected !== null) {
+        this.selected.isSelected = false;
+      }
+      this.selected = null;
+      this.redraw();
+    }
   };
 }
 
