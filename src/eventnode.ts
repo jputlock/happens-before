@@ -5,6 +5,9 @@ export class EventNode {
   static readonly RADIUS: number = 30;
 
   private static NODE_COUNTER = 1;
+  public static resetCounter() {
+    this.NODE_COUNTER = 0;
+  }
 
   // MEMBER DATA
   parentIdentifier: number;

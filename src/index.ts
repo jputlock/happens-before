@@ -94,6 +94,7 @@ class DrawingApp {
     }
 
     this.links = [];
+    EventNode.resetCounter();
   }
 
   private clearCanvas() {
