@@ -11,6 +11,7 @@ class DrawingApp {
 
   private selected: EventNode | null = null;
   private dragging = false;
+  private holdingShift = false;
 
   private threads: Map<number, ExecutionThread>;
   private links: RelationLink[];
@@ -18,6 +19,8 @@ class DrawingApp {
   constructor() {
     this.canvas = document.getElementById('canvas') as HTMLCanvasElement;
     this.context = this.canvas.getContext('2d')!;
+    this.canvas.width = this.canvas.offsetWidth;
+    // this.canvas.height = this.canvas.offsetHeight * 0.8;
 
     // Set to default state
     this.threads = new Map();
@@ -31,14 +34,6 @@ class DrawingApp {
     this.redraw();
   }
 
-  getCanvasWidth(): number {
-    return this.canvas.width;
-  }
-
-  getCanvasHeight(): number {
-    return this.canvas.height;
-  }
-
   private createUserEvents() {
     window.addEventListener('resize', this.resizeHandler);
 
@@ -48,6 +43,7 @@ class DrawingApp {
     canvas.addEventListener('mousemove', this.mouseMoveHandler);
     canvas.addEventListener('mouseup', this.mouseUpHandler);
     window.addEventListener('keydown', this.keyDownHandler);
+    window.addEventListener('keyup', this.keyUpHandler);
 
     document
       .getElementById('add_thread')!
@@ -59,12 +55,10 @@ class DrawingApp {
 
   private redraw() {
     this.clearCanvas();
-    this.canvas.width = window.innerWidth;
-    this.canvas.height = window.innerHeight;
 
     // Draw the threads
     for (const thread of this.threads.values()) {
-      thread.draw(this.getCanvasWidth(), this.getCanvasHeight(), this.context);
+      thread.draw(this.canvas.width, this.canvas.height, this.context);
     }
 
     // Draw the links
@@ -92,6 +86,7 @@ class DrawingApp {
     for (const num of [0, 1]) {
       this.threads.set(num, new ExecutionThread(num));
     }
+    this.canvas.height = 2 * 0.8 * window.outerHeight;
 
     this.links = [];
     EventNode.resetCounter();
@@ -121,7 +116,12 @@ class DrawingApp {
   // EVENT HANDLERS
   private addThreadHandler = () => {
     const nextId = this.threads.size;
-    this.threads.set(nextId, new ExecutionThread(nextId));
+    const newThread = new ExecutionThread(nextId);
+    this.threads.set(nextId, newThread);
+    if (newThread.y > this.canvas.height) {
+      this.canvas.height = newThread.y + 200;
+    }
+
     this.redraw();
   };
 
@@ -135,8 +135,9 @@ class DrawingApp {
   };
 
   private doubleClickHandler = (event: MouseEvent) => {
-    const mouseX = event.pageX;
-    const mouseY = event.pageY;
+    const mouseX = event.offsetX;
+    const mouseY = event.offsetY;
+    console.log(mouseX, mouseY);
     const thread = this.getNearestThread(mouseY);
     if (thread === null) {
       return;
@@ -174,7 +175,10 @@ class DrawingApp {
       this.selected = newSelection;
     } else if (this.selected !== newSelection) {
       this.selected.isSelected = false;
-      if (this.selected.parentIdentifier !== newSelection.parentIdentifier) {
+      if (
+        this.holdingShift &&
+        this.selected.parentIdentifier !== newSelection.parentIdentifier
+      ) {
         // TODO: prevent duplicate links
         this.links.push(new RelationLink(this.selected, newSelection));
         newSelection.isSelected = false;
@@ -189,7 +193,7 @@ class DrawingApp {
   };
 
   private mouseMoveHandler = (event: MouseEvent) => {
-    if (!this.dragging || !this.selected) {
+    if (!this.dragging || !this.selected || this.holdingShift) {
       return;
     }
 
@@ -199,7 +203,7 @@ class DrawingApp {
 
     // Snap the node to the thread the mouse is nearest to
     const mouseY = event.pageY;
-    const thread = this.getNearestThread(mouseY);
+    let thread = this.getNearestThread(mouseY);
     if (
       thread !== null &&
       thread.identifier !== this.selected.parentIdentifier
@@ -210,6 +214,11 @@ class DrawingApp {
       thread.insertNode(this.selected);
       this.selected.parentIdentifier = thread.identifier;
     }
+
+    if (thread === null) {
+      thread = this.threads.get(this.selected.parentIdentifier)!;
+    }
+    thread.sortNodes();
 
     this.redraw();
   };
@@ -228,6 +237,16 @@ class DrawingApp {
       }
       this.selected = null;
       this.redraw();
+    } else if (keyCode.includes('Shift')) {
+      this.holdingShift = true;
+    }
+  };
+
+  private keyUpHandler = (event: KeyboardEvent) => {
+    const keyCode = event.code;
+
+    if (keyCode.includes('Shift')) {
+      this.holdingShift = false;
     }
   };
 }

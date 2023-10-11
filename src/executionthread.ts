@@ -45,6 +45,10 @@ export class ExecutionThread {
     context.strokeStyle = oldStyle.strokeStyle;
   }
 
+  sortNodes() {
+    this.nodes.sort();
+  }
+
   clear() {
     this.nodes.length = 0;
   }
