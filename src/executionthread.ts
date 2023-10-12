@@ -30,23 +30,15 @@ export class ExecutionThread {
 
     context.beginPath();
     context.moveTo(0, y);
-    for (const node of this.nodes) {
-      const x = node.x;
-      context.lineTo(x - EventNode.RADIUS, this.y);
-      context.stroke();
-      node.draw(x, y, context);
-      context.beginPath();
-      context.moveTo(x + EventNode.RADIUS, this.y);
-    }
     context.lineTo(width, y);
     context.stroke();
 
+    for (const node of this.nodes) {
+      node.draw(y, context);
+    }
+
     context.lineWidth = oldStyle.lineWidth;
     context.strokeStyle = oldStyle.strokeStyle;
-  }
-
-  sortNodes() {
-    this.nodes.sort();
   }
 
   clear() {

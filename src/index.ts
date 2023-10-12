@@ -218,7 +218,6 @@ class DrawingApp {
     if (thread === null) {
       thread = this.threads.get(this.selected.parentIdentifier)!;
     }
-    thread.sortNodes();
 
     this.redraw();
   };

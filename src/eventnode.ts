@@ -22,15 +22,24 @@ export class EventNode {
   }
 
   // Draw this node
-  draw(x: number, y: number, context: CanvasRenderingContext2D) {
+  draw(y: number, context: CanvasRenderingContext2D) {
+    const x = this.x;
     const oldStyle = {
       lineWidth: context.lineWidth,
       strokeStyle: context.strokeStyle,
+      fillStyle: context.fillStyle,
     };
 
     context.lineWidth = 3;
     context.strokeStyle = this.isSelected ? 'red' : 'blue';
+    context.fillStyle = 'white';
 
+    // Filled circle
+    context.beginPath();
+    context.arc(x, y, EventNode.RADIUS, 0, 2 * Math.PI);
+    context.fill();
+
+    // Border circle
     context.beginPath();
     context.arc(x, y, EventNode.RADIUS, 0, 2 * Math.PI);
     context.stroke();
@@ -42,6 +51,7 @@ export class EventNode {
 
     context.lineWidth = oldStyle.lineWidth;
     context.strokeStyle = oldStyle.strokeStyle;
+    context.fillStyle = oldStyle.fillStyle;
   }
 
   private drawText(
@@ -50,6 +60,9 @@ export class EventNode {
     text: string,
     context: CanvasRenderingContext2D
   ) {
+    const oldFillStyle = context.fillStyle;
+    context.fillStyle = 'black';
+
     let fontSize = 26;
     let width = 0;
     do {
@@ -60,6 +73,8 @@ export class EventNode {
     x -= width / 2;
 
     context.fillText(text, Math.round(x), Math.round(y) + 6);
+
+    context.fillStyle = oldFillStyle;
   }
 
   // Project the specified 'point' onto the node's circular outline. In other words, get the
